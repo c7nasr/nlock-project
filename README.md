@@ -10,7 +10,7 @@ For Users Use this [link](https://github.com/c7nasr/NLock/releases/download/1.0.
 ## For Developers 
 - Clone Project Using Following Commend
 ```text
-git clone https://github.com/c7nasr/NLock.git
+https://github.com/c7nasr/nlock-project.git
 ```
 
 
